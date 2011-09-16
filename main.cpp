@@ -49,6 +49,8 @@ void split_record(vector<string> * v,const string& s);
 void process_read_count_line( vector<string> * v, read_count * r);
 void make_sample_field(const string& ref, const string& alt, const string& format, const int& depth, const read_count& rc, const string& sample_field, string * answer);
 void split_record_comma(vector<string> * v,const string& s);
+string to_string(const float& f);
+string to_string(const int& f);
 
 int main(int argc, char * argv[]) {
 
@@ -151,27 +153,74 @@ int main(int argc, char * argv[]) {
 }
 
 void make_sample_field(const string& ref, const string& alt, const string& format, const int& depth, const read_count& rc,const string& sample_field, string * answer){
-    *answer = "0/2:0:4:3:38:0.750:.:40:32";
-    *answer = *answer+"\t"+sample_field;
     string gt,mq,ad,bq;
-    gt = mq = ad = bq = ".";
-
+    if( ref == "A"){
+        mq = to_string(rc.a.mq);
+    } else if ( ref == "C") {
+        mq = to_string(rc.c.mq);
+    } else if ( ref == "G") {
+        mq = to_string(rc.g.mq);
+    } else if ( ref == "T") {
+        mq = to_string(rc.t.mq);
+    } else {
+        throw "wtf, ref is neither A nor C nor G nor T.";
+    }
     vector<string> alts;
+    alts.push_back(ref);
     split_record_comma(&alts, alt);
-    
+    for(vector<string>::iterator it=alts.begin();it!=alts.end();it++){
+        if(bq != ""){
+            bq+=",";
+        }
+        if(ad != ""){
+            ad+=",";
+        }
+        if( *it == "A"){
+            bq += to_string(rc.a.bq);
+            ad += to_string(rc.a.dp);
+        } else if ( *it == "C") {
+            bq += to_string(rc.c.bq);
+            ad += to_string(rc.c.dp);
+        } else if ( *it == "G") {
+            bq += to_string(rc.g.bq);
+            ad += to_string(rc.g.dp);
+        } else if ( *it == "T") {
+            bq += to_string(rc.t.bq);
+            ad += to_string(rc.t.dp);
+        } else {
+            throw "ref is neither A nor C nor G nor T.";
+        }
+    }
+
     vector<string> formats;
     split_record(&formats, format);
-    
-    if(rc.depth == 0){
-        
-    } else {
+ 
+    if(rc.depth > 0){
         gt = "0/0";
+    } else {
+        gt = mq = ad = bq = ".";
 
     }
 
-    
-
-
+        
+    for(vector<string>::iterator it=formats.begin();it!=formats.end();it++){
+        if(*answer != ""){
+            *answer+=":";
+        }
+        if( *it == "AD"){
+            *answer += ad;
+        } else if ( *it == "BQ") {
+            *answer += bq;
+        } else if ( *it == "GT") {
+            *answer += gt;
+        } else if ( *it == "MQ") {
+            *answer += mq;
+        } else if ( *it == "DP") {
+            *answer += rc.depth;
+        } else {
+            *answer += ".";
+        }
+    }
 }
 
 /*
@@ -218,7 +267,12 @@ int to_int( const string& s){
 float to_float(const string& s){
     return lexical_cast<float>(s);
 }
-
+string to_string(const float& f){
+    return lexical_cast<string>(f);
+}
+string to_string(const int& f){
+    return lexical_cast<string> (f);
+}
 
 
 void process_read_count_line( vector<string> * v, read_count * r){
