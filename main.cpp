@@ -98,7 +98,7 @@ int main(int argc, char * argv[]) {
         if(sample_buff != ".") {
             cout << sample_buff << endl;
         } else {
-            string answer;
+            string answer = "";
 
             split_line(&vcf,vcf_buff);
             split_line(&rcount,readcount_buff);
@@ -106,9 +106,8 @@ int main(int argc, char * argv[]) {
             if(rc_eof){
 
                 read_count rc;
-               // rc.depth = "0";
                 make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
-                cout << "rc\t" <<  answer << endl;
+                cout <<  answer << endl;
 
             }else{
                 if( vcf[CHROM] != rcount[CHR] ){
@@ -117,36 +116,28 @@ int main(int argc, char * argv[]) {
                     rc.depth = 0;
                     make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
                     get_rcount = 0;
-                    cout << "1\t" <<  answer << endl;
+                    cout <<  answer << endl;
 
                 } else if ( vcf[POS] != rcount[PS] ) {
                     read_count rc;
                     rc.depth = 0;
                     make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
                     get_rcount = 0;
-                    cout << "2\t" << answer << endl;
+                    cout << answer << endl;
 
                 } else {
                     read_count rc;
                     process_read_count_line(&rcount,&rc);
-                    make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
+                    make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],rc.depth,rc,sample_buff, &answer);
                     get_rcount = 1;
-                    cout << "3\t" <<  answer << endl;
+                    cout <<  answer << endl;
                 }
             }
         }                       
-        
-
-
-        for(vector<string>::iterator it=rcount.begin(); it!=rcount.end();it++){
-            //cout << *it << endl;
-        }
-
         if(get_vcf) getline(vcf_stream, vcf_buff);
         if(get_rcount) getline(rcount_stream, readcount_buff);
         if(get_sample) getline(sample_stream, sample_buff);
         if(rcount_stream.eof()) rc_eof=1;
-        //eof = (vcf_stream.eof() || rcount_stream.eof() || sample_stream.eof());
         done = (vcf_stream.eof());
     }
     return 0;
@@ -195,13 +186,12 @@ void make_sample_field(const string& ref, const string& alt, const string& forma
     vector<string> formats;
     split_record(&formats, format);
  
-    if(rc.depth > 0){
+    if(depth > 0){
         gt = "0/0";
     } else {
         gt = mq = ad = bq = ".";
 
     }
-
         
     for(vector<string>::iterator it=formats.begin();it!=formats.end();it++){
         if(*answer != ""){
@@ -216,24 +206,13 @@ void make_sample_field(const string& ref, const string& alt, const string& forma
         } else if ( *it == "MQ") {
             *answer += mq;
         } else if ( *it == "DP") {
-            *answer += rc.depth;
+            *answer += to_string(depth);
         } else {
             *answer += ".";
         }
     }
 }
 
-/*
-void split_line(vector<string> * v,const string& s) {
-    if(! v->empty()){
-        v->clear();
-    }
-    tokenizer<> tok(s);
-    for(tokenizer<>::iterator it=tok.begin();it!=tok.end();it++){
-        v->push_back(*it);
-    }
-}
-*/
 void split_record(vector<string> * v,const string& s) {
     char_separator<char> sep(":");
     tokenizer<char_separator<char> > tok(s, sep);
@@ -281,10 +260,8 @@ void process_read_count_line( vector<string> * v, read_count * r){
     r->pos = lexical_cast<int>  ((*v)[PS].c_str()); 
     r->depth = lexical_cast<int> ( (*v)[DP].c_str());
     vector<string> bases;
-    //cout << "here!" << endl;
+
     split_record(&bases,(*v)[A]);
-    
-    //cout << "A = " << (*v)[A] <<  endl;
     r->a.dp = lexical_cast<int> (bases[1]);
     r->a.bq = lexical_cast<float>(bases[2]);
     r->a.mq = lexical_cast<float>(bases[3]);
