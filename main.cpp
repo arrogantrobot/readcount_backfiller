@@ -57,15 +57,15 @@ int main(int argc, char * argv[]) {
     vcf_cols_in.push(boost::iostreams::gzip_decompressor());
     vcf_cols_in.push(vcfcols);
 
-    ifstream rcount(readcount.c_str(), ios_base::in | ios_base::binary);
+    ifstream rcount_is(readcount.c_str(), ios_base::in | ios_base::binary);
     boost::iostreams::filtering_streambuf<boost::iostreams::input> rcount_in;
     rcount_in.push(boost::iostreams::gzip_decompressor());
-    rcount_in.push(rcount);
+    rcount_in.push(rcount_is);
 
-    ifstream sample(sample_col.c_str(), ios_base::in | ios_base::binary);
+    ifstream sample_is(sample_col.c_str(), ios_base::in | ios_base::binary);
     boost::iostreams::filtering_streambuf<boost::iostreams::input> sample_col_in;
     sample_col_in.push(boost::iostreams::gzip_decompressor());
-    sample_col_in.push(sample);
+    sample_col_in.push(sample_is);
 
     string vcf_buff;
     string readcount_buff;
@@ -80,22 +80,43 @@ int main(int argc, char * argv[]) {
     getline(sample_stream, sample_buff);
 
 
-    vector<string> vcf_fields;
-    vector<string> rcount_fields;
-    vector<string> sample_fields;
+    vector<string> vcf;
+    vector<string> rcount;
+    vector<string> sample;
 
     bool eof=false;
 
     while( ! eof ){ 
 
-        split_line(&vcf_fields,vcf_buff);
-        split_line(&rcount_fields,readcount_buff);
-        split_line(&sample_fields,sample_buff);
+        split_line(&vcf,vcf_buff);
+        split_line(&rcount,readcount_buff);
+        split_line(&sample,sample_buff); 
+/*
+        if(sample_buff == "."){
+            cout << "Found it!"<< endl;
+        }
         
+        for(vector<string>::iterator it=sample.begin(); it!=sample.end();it++){
+            cout << *it << endl;
+        }
+        cout << "size of sample vector is " << sample.size() << endl;
+        return 0;
+*/
+        if( vcf[CHROM] != rcount[CHR] ){
+            
+
+
+        } else {
+
+
+        }
+            //if( to_int(vcf[POS]) != to_int(rcount[PS]) ) {
+
+                                   
         
 
 
-        for(vector<string>::iterator it=vcf_fields.begin(); it!=vcf_fields.end();it++){
+        for(vector<string>::iterator it=vcf.begin(); it!=vcf.end();it++){
 
         }
 
@@ -106,6 +127,12 @@ int main(int argc, char * argv[]) {
         eof = (vcf_stream.eof() || rcount_stream.eof() || sample_stream.eof());
 
     }
+}
+
+void make_sample_field(const char& ref, const string& alt, const string& format, const int& depth, const read_count& rc){
+
+
+
 }
 
 void split_line(vector<string> * v,const string& s) {
@@ -122,6 +149,13 @@ void split_record(vector<string> * v,const string& s) {
     for(tokenizer<char_separator<char> >::iterator it=tok.begin();it!=tok.end();it++){
         v->push_back(*it);
     }
+}
+
+int to_int( const string& s){
+    return lexical_cast<int>(s);
+}
+float to_float(const string& s){
+    return lexical_cast<float>(s);
 }
 
 void process_read_count_line( vector<string> * v, read_count * r){
