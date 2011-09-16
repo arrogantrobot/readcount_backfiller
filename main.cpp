@@ -33,8 +33,9 @@ using namespace std;
 using namespace boost;
 
 struct base_data {
-        int dp;
-        float bq,mq;
+    int dp;
+    float bq,mq;
+    base_data():dp(0),bq(0.0),mq(0.0){}
 };
 
 struct read_count {
@@ -47,6 +48,7 @@ void split_line(vector<string> * v, const string& s);
 void split_record(vector<string> * v,const string& s);
 void process_read_count_line( vector<string> * v, read_count * r);
 void make_sample_field(const string& ref, const string& alt, const string& format, const int& depth, const read_count& rc, const string& sample_field, string * answer);
+void split_record_comma(vector<string> * v,const string& s);
 
 int main(int argc, char * argv[]) {
 
@@ -90,59 +92,47 @@ int main(int argc, char * argv[]) {
     bool done=false;
     bool get_vcf=1,get_rcount=1,get_sample=1;
     while( ! done ){ 
-        string answer;
 
-        //cout << "begin loop" << endl;
-        split_line(&vcf,vcf_buff);
-        split_line(&rcount,readcount_buff);
-        //split_line(&sample,sample_buff); 
-/*
-        if(sample_buff == "."){
-            cout << "Found it!"<< endl;
-        }
-        
-        for(vector<string>::iterator it=sample.begin(); it!=sample.end();it++){
-            cout << *it << endl;
-        }
-        cout << "size of sample vector is " << sample.size() << endl;
-        return 0;
-*/
-        if(rc_eof){
-
-            read_count rc;
-            rc.chrom = "0";
-            make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
-            get_rcount = 0;
-            cout << "rc\t" <<  answer << endl;
-
-        }
-        if( vcf[CHROM] != rcount[CHR] ){
-            
-            read_count rc;
-            rc.chrom = "0";
-            make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
-            get_rcount = 0;
-            cout << "1\t" <<  answer << endl;
-
-        } else if ( vcf[POS] != rcount[PS] ) {
-            //cout << "made it into 2 " << endl;
-            read_count rc;
-            rc.chrom = "0";
-            make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
-            get_rcount = 0;
-            cout << "2\t" << answer << endl;
-
+        if(sample_buff != ".") {
+            cout << sample_buff << endl;
         } else {
-            //cout << "made it into 3 " << endl;
-            //cout << "rcbuf = " << readcount_buff << endl;
-            //cout << "rcvex = " << rcount[A] << endl;
-            read_count rc;
-            process_read_count_line(&rcount,&rc);
-            make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
-            get_rcount = 1;
-            cout << "3\t" <<  answer << endl;
-        }
-                                   
+            string answer;
+
+            split_line(&vcf,vcf_buff);
+            split_line(&rcount,readcount_buff);
+
+            if(rc_eof){
+
+                read_count rc;
+               // rc.depth = "0";
+                make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
+                cout << "rc\t" <<  answer << endl;
+
+            }else{
+                if( vcf[CHROM] != rcount[CHR] ){
+                    
+                    read_count rc;
+                    rc.depth = 0;
+                    make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
+                    get_rcount = 0;
+                    cout << "1\t" <<  answer << endl;
+
+                } else if ( vcf[POS] != rcount[PS] ) {
+                    read_count rc;
+                    rc.depth = 0;
+                    make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
+                    get_rcount = 0;
+                    cout << "2\t" << answer << endl;
+
+                } else {
+                    read_count rc;
+                    process_read_count_line(&rcount,&rc);
+                    make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc,sample_buff, &answer);
+                    get_rcount = 1;
+                    cout << "3\t" <<  answer << endl;
+                }
+            }
+        }                       
         
 
 
@@ -155,14 +145,33 @@ int main(int argc, char * argv[]) {
         if(get_sample) getline(sample_stream, sample_buff);
         if(rcount_stream.eof()) rc_eof=1;
         //eof = (vcf_stream.eof() || rcount_stream.eof() || sample_stream.eof());
-        done = (vcf_stream.eof() && rcount_stream.eof() && sample_stream.eof());
-
+        done = (vcf_stream.eof());
     }
+    return 0;
 }
 
 void make_sample_field(const string& ref, const string& alt, const string& format, const int& depth, const read_count& rc,const string& sample_field, string * answer){
     *answer = "0/2:0:4:3:38:0.750:.:40:32";
     *answer = *answer+"\t"+sample_field;
+    string gt,mq,ad,bq;
+    gt = mq = ad = bq = ".";
+
+    vector<string> alts;
+    split_record_comma(&alts, alt);
+    
+    vector<string> formats;
+    split_record(&formats, format);
+    
+    if(rc.depth == 0){
+        
+    } else {
+        gt = "0/0";
+
+    }
+
+    
+
+
 }
 
 /*
@@ -183,6 +192,15 @@ void split_record(vector<string> * v,const string& s) {
         v->push_back(*it);
     }
 }
+
+void split_record_comma(vector<string> * v,const string& s) {
+    char_separator<char> sep(",");
+    tokenizer<char_separator<char> > tok(s, sep);
+    for(tokenizer<char_separator<char> >::iterator it=tok.begin();it!=tok.end();it++){
+        v->push_back(*it);
+    }
+}
+
 
 void split_line(vector<string> * v,const string& s) {
     if(! v->empty()){
