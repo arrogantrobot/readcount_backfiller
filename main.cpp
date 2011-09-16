@@ -38,13 +38,15 @@ struct base_data {
 };
 
 struct read_count {
-    int chrom, pos, depth;
+    string chrom;
+    int pos, depth;
     base_data   a,c,g,t,n;
 };
 
 void split_line(vector<string> * v, const string& s);
 void split_record(vector<string> * v,const string& s);
 void process_read_count_line( vector<string> * v, read_count * r);
+void make_sample_field(const string& ref, const string& alt, const string& format, const int& depth, const read_count& rc, string * answer);
 
 int main(int argc, char * argv[]) {
 
@@ -87,6 +89,7 @@ int main(int argc, char * argv[]) {
     bool eof=false;
 
     while( ! eof ){ 
+        string answer;
 
         split_line(&vcf,vcf_buff);
         split_line(&rcount,readcount_buff);
@@ -103,7 +106,9 @@ int main(int argc, char * argv[]) {
         return 0;
 */
         if( vcf[CHROM] != rcount[CHR] ){
-            
+            read_count rc;
+            rc.chrom = "0";
+            make_sample_field(vcf[REF],vcf[ALT],vcf[FORMAT],0,rc, &answer);
 
 
         } else {
@@ -129,7 +134,7 @@ int main(int argc, char * argv[]) {
     }
 }
 
-void make_sample_field(const char& ref, const string& alt, const string& format, const int& depth, const read_count& rc){
+void make_sample_field(const string& ref, const string& alt, const string& format, const int& depth, const read_count& rc, string * answer){
 
 
 
@@ -157,6 +162,8 @@ int to_int( const string& s){
 float to_float(const string& s){
     return lexical_cast<float>(s);
 }
+
+
 
 void process_read_count_line( vector<string> * v, read_count * r){
 
