@@ -53,7 +53,11 @@ string to_string(const float& f);
 string to_string(const int& f);
 
 int main(int argc, char * argv[]) {
-
+    if(argc < 3){
+        cout << "backfiller <vcf_file.gz> <readcounts.gz> <sample_column.gz>" << endl;
+        return 1;
+    }
+    
     string vcf_cols = argv[1];
     string readcount = argv[2];
     string sample_col = argv[3];
@@ -84,17 +88,28 @@ int main(int argc, char * argv[]) {
     getline(vcf_stream, vcf_buff);
     getline(rcount_stream, readcount_buff);
     getline(sample_stream, sample_buff);
+    getline(sample_stream, sample_buff);
 
+    while( vcf_buff.at(0) == '#'){
+    //cout << "vcf = " << vcf_buff << endl;
+        getline(vcf_stream, vcf_buff);
+    }
 
     vector<string> vcf;
     vector<string> rcount;
     vector<string> sample;
 
+    //cout << "vcf = " << vcf_buff << endl;
+    //cout << "rcount = " << readcount_buff << endl;
+    //cout << "sample = " << sample_buff << endl;
+
     bool rc_eof=false;
     bool done=false;
     bool get_vcf=1,get_rcount=1,get_sample=1;
+    //int count=0;
     while( ! done ){ 
-
+        //count++;
+        //if(count % 100000) cout << "line count = " << count << endl;
         if(sample_buff != ".") {
             cout << sample_buff << endl;
         } else {
